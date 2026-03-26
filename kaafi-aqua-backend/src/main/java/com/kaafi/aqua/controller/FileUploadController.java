@@ -91,6 +91,34 @@ public class FileUploadController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
     
+    @DeleteMapping("/profile/image")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> removeProfileImage(HttpServletRequest request) {
+        String username = getCurrentUser(request);
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Delete the image file if it exists
+        if (user.getProfileImage() != null && !user.getProfileImage().isEmpty()) {
+            String fileName = user.getProfileImage().substring(user.getProfileImage().lastIndexOf("/") + 1);
+            Path uploadDir = Paths.get(uploadPath + "/profiles");
+            Path filePath = uploadDir.resolve(fileName);
+            try {
+                Files.deleteIfExists(filePath);
+            } catch (IOException e) {
+                System.err.println("Failed to delete image file: " + e.getMessage());
+            }
+            
+            // Remove image URL from database
+            user.setProfileImage(null);
+            userRepository.save(user);
+            
+            return ResponseEntity.ok(ApiResponse.success("Profile image removed successfully", null));
+        }
+        
+        return ResponseEntity.badRequest().body(ApiResponse.error("No profile image to remove"));
+    }
+    
     private String getCurrentUser(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

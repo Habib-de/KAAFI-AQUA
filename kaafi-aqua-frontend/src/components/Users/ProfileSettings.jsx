@@ -89,7 +89,7 @@ const ProfileSettings = () => {
       return;
     }
     
-    // Show preview immediately
+    // Show preview immediately with proper cropping
     const reader = new FileReader();
     reader.onloadend = () => {
       setProfileImagePreview(reader.result);
@@ -251,12 +251,13 @@ const ProfileSettings = () => {
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8">
               <div className="flex items-center space-x-4">
                 <div className="relative group">
-                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                  {/* Circular container with proper styling */}
+                  <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center overflow-hidden ring-4 ring-white/50 shadow-lg">
                     {profileImagePreview ? (
                       <img 
                         src={profileImagePreview} 
                         alt="Profile" 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
                     ) : (
                       <User className="w-10 h-10 text-blue-600" />
@@ -272,16 +273,16 @@ const ProfileSettings = () => {
                   <button 
                     onClick={handleImageClick}
                     disabled={uploadingImage}
-                    className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors disabled:opacity-50"
+                    className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors disabled:opacity-50 ring-2 ring-white"
                     title="Change profile picture"
                   >
-                    <Camera className="w-4 h-4 text-gray-600" />
+                    <Camera className="w-3.5 h-3.5 text-gray-600" />
                   </button>
                   {profileImagePreview && (
                     <button 
                       onClick={handleRemoveImage}
                       disabled={uploadingImage}
-                      className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 shadow-md hover:bg-red-600 transition-colors disabled:opacity-50"
+                      className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 shadow-md hover:bg-red-600 transition-colors disabled:opacity-50 ring-2 ring-white"
                       title="Remove image"
                     >
                       <X className="w-3 h-3 text-white" />
