@@ -1,0 +1,46 @@
+# Backend
+target/
+*.jar
+*.war
+*.ear
+*.log
+.idea/
+*.iml
+*.iws
+.classpath
+.project
+.settings/
+.mvn/
+
+# Frontend
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Uploads
+uploads/
+
+# Test
+**/test-output/
+**/target/surefire-reports/
