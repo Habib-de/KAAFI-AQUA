@@ -30,6 +30,8 @@ import StockManagement from './components/Inventory/StockManagement';
 import ExpenseTracker from './components/Expenses/ExpenseTracker';
 import UserManagement from './components/Users/UserManagement';
 import ProfileSettings from './components/Users/ProfileSettings';
+import CustomerEngagement from './components/CustomerEngagement/CustomerEngagement';
+import AdminSettings from './components/Admin/Settings';
 import toast from 'react-hot-toast';
 import logoImage from './assets/profile.png';
 
@@ -57,12 +59,13 @@ const Layout = ({ children, userRole }) => {
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/pos', icon: ShoppingCart, label: 'POS' },
     { path: '/admin/sales', icon: BarChart3, label: 'Sales' },
+    { path: '/admin/settings', icon: Settings, label: 'Settings' },
     { path: '/admin/inventory/tank', icon: Droplets, label: 'Tank Level' },
     { path: '/admin/inventory/filters', icon: Filter, label: 'Filter Status' },
     { path: '/admin/inventory/stock', icon: Package, label: 'Stock Management' },
     { path: '/admin/expenses', icon: DollarSign, label: 'Expenses' },
     { path: '/admin/users', icon: Users, label: 'Users' },
-    { path: '/admin/profile', icon: Settings, label: 'Settings' },
+    { path: '/admin/profile', icon: Settings, label: 'Profile' },
   ];
   
   const staffMenuItems = [
@@ -77,51 +80,60 @@ const Layout = ({ children, userRole }) => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar */}
+      {/* Top Navigation Bar - Mobile Optimized */}
       <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+        <div className="px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            {/* Left section - Menu button and Logo */}
             <div className="flex items-center">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden mr-4 text-gray-600 hover:text-gray-900"
+                className="lg:hidden mr-2 sm:mr-4 text-gray-600 hover:text-gray-900 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Menu"
               >
-                <Menu className="w-6 h-6" />
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
               
-              {/* Profile Image and Brand */}
-              <div className="flex items-center space-x-3">
+              {/* Brand with Water Drop Background - Option 2 (Keeping profile image) */}
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <img 
                   src={logoImage} 
-                  alt="Profile" 
-                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
+                  alt="KAAFI AQUA" 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-500"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = 'https://via.placeholder.com/40?text=KA';
                   }}
                 />
-                <div className="flex flex-col">
-                  <h1 className="text-xl font-bold text-blue-600">KAAFI AQUA</h1>
-                  <span className="text-xs text-gray-500">
-                    {userRole === 'ADMIN' ? 'Administrator Panel' : 'Staff Operations Panel'}
+                <div>
+                  <h1 className="text-sm sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                    KAAFI AQUA
+                  </h1>
+                  <span className="text-[10px] sm:text-xs text-gray-500">
+                    {userRole === 'ADMIN' ? '' : ''}
                   </span>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
+            {/* Right section - User info and Logout */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                {/* User info - Responsive text sizes */}
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-700">
-                    {getGreeting()}, {user?.name || 'User'}!
+                  <p className="text-xs sm:text-sm font-medium text-gray-700">
+                    {getGreeting()}!
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-[10px] sm:text-xs text-gray-500">
                     {userRole === 'ADMIN' ? 'Administrator' : 'Sales Staff'}
                   </p>
                 </div>
+                
+                {/* Logout button - Icon only on very small screens */}
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  aria-label="Logout"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline">Logout</span>
@@ -132,12 +144,13 @@ const Layout = ({ children, userRole }) => {
         </div>
       </nav>
       
+      {/* Sidebar and Main Content */}
       <div className="flex">
         {/* Sidebar */}
         <aside className={`fixed lg:static inset-y-0 left-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 w-64 bg-white border-r border-gray-200 h-full lg:h-auto overflow-y-auto`}>
           <div className="flex items-center justify-between p-4 border-b border-gray-200 lg:hidden">
             <h2 className="font-semibold text-gray-900">Menu</h2>
-            <button onClick={() => setSidebarOpen(false)}>
+            <button onClick={() => setSidebarOpen(false)} className="p-1 rounded-lg hover:bg-gray-100">
               <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
@@ -157,7 +170,7 @@ const Layout = ({ children, userRole }) => {
                   }`}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium text-sm">{item.label}</span>
                 </Link>
               );
             })}
@@ -275,7 +288,22 @@ function App() {
                   <ExpenseTracker />
                 </Layout>
               </ProtectedRoute>
+            } />   
+            <Route path="/admin/customer-engagement" element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <Layout userRole="ADMIN">
+                  <CustomerEngagement />
+                </Layout>
+              </ProtectedRoute>
             } />
+            <Route path="/admin/settings" element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <Layout userRole="ADMIN">
+                  <AdminSettings />
+                </Layout>
+              </ProtectedRoute>
+            } />
+
             
             {/* Staff Routes */}
             <Route path="/staff" element={
@@ -313,6 +341,7 @@ function App() {
                 </Layout>
               </ProtectedRoute>
             } />
+            
             
             {/* Default Route */}
             <Route path="/" element={<Navigate to="/login" replace />} />

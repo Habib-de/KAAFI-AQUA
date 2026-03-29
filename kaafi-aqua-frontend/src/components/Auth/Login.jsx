@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Lock, User, ArrowRight } from 'lucide-react';
+import { Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import logoImage from '../../assets/profile.png';
 
@@ -13,10 +13,13 @@ const Login = () => {
     username: '',
     password: ''
   });
+  const [inactiveError, setInactiveError] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setInactiveError(false);
+    
     const result = await login(formData.username, formData.password);
     setIsLoading(false);
     
@@ -28,6 +31,9 @@ const Login = () => {
         navigate('/staff');
       }
     } else {
+      if (result.message.includes('inactive')) {
+        setInactiveError(true);
+      }
       toast.error(result.message);
     }
   };
@@ -37,6 +43,7 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    setInactiveError(false);
   };
 
   return (
@@ -64,6 +71,19 @@ const Login = () => {
         </div>
         
         <div className="bg-white px-6 pb-5">
+          {/* Inactive Account Alert */}
+          {inactiveError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-red-800">Account Inactive</p>
+                <p className="text-xs text-red-600 mt-0.5">
+                  Your account has been deactivated. Please contact your administrator to reactivate your account.
+                </p>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

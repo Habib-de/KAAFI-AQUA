@@ -14,7 +14,8 @@ import java.time.LocalDateTime;
     @Index(name = "idx_date", columnList = "date"),
     @Index(name = "idx_customer", columnList = "customer"),
     @Index(name = "idx_method", columnList = "method"),
-    @Index(name = "idx_status", columnList = "status")
+    @Index(name = "idx_status", columnList = "status"),
+    @Index(name = "idx_customer_id", columnList = "customer_id")
 })
 public class Sale {
     
@@ -50,6 +51,16 @@ public class Sale {
     @Column(nullable = false, length = 100)
     private String staff;
     
+    // New fields for credit payment system
+    @Column(name = "paid_amount", precision = 10, scale = 2)
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+    
+    @Column(name = "balance", insertable = false, updatable = false)
+    private BigDecimal balance;
+    
+    @Column(name = "customer_id")
+    private Long customerId;
+    
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
@@ -84,6 +95,21 @@ public class Sale {
     public String getStaff() { return staff; }
     public void setStaff(String staff) { this.staff = staff; }
     
+    public BigDecimal getPaidAmount() { return paidAmount; }
+    public void setPaidAmount(BigDecimal paidAmount) { 
+        this.paidAmount = paidAmount;
+        // If paidAmount equals amount, mark as COMPLETED
+        if (paidAmount != null && amount != null && paidAmount.compareTo(amount) >= 0) {
+            this.status = SaleStatus.COMPLETED;
+        }
+    }
+    
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
+    
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+    
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     
@@ -105,5 +131,20 @@ public class Sale {
         if (method == null) {
             method = PaymentMethod.CASH;
         }
+        if (paidAmount == null) {
+            paidAmount = BigDecimal.ZERO;
+        }
+    }
+    
+    // Helper method to check if sale is fully paid
+    public boolean isFullyPaid() {
+        return paidAmount != null && amount != null && paidAmount.compareTo(amount) >= 0;
+    }
+    
+    // Helper method to get remaining balance
+    public BigDecimal getRemainingBalance() {
+        if (amount == null) return BigDecimal.ZERO;
+        if (paidAmount == null) return amount;
+        return amount.subtract(paidAmount);
     }
 }

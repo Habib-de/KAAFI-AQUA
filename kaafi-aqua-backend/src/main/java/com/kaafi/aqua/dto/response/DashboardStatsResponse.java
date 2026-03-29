@@ -40,6 +40,12 @@ public class DashboardStatsResponse {
     // Weekly trend
     private List<WeeklySalesData> weeklySales;
     
+    // NEW: Profit/Loss Stats
+    private BigDecimal todayProfit;
+    private BigDecimal todayExpenses;
+    private Double profitTrend; // percentage change from yesterday
+    private Boolean isProfit; // true if profit, false if loss
+    
     @Data
     @Builder
     public static class TankStats {

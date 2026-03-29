@@ -2,6 +2,7 @@ package com.kaafi.aqua.controller;
 
 import com.kaafi.aqua.dto.response.ApiResponse;
 import com.kaafi.aqua.dto.response.DashboardStatsResponse;
+import com.kaafi.aqua.dto.response.ProfitDetailsResponse;
 import com.kaafi.aqua.service.DashboardService;
 import com.kaafi.aqua.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,15 @@ public class DashboardController {
         String username = getCurrentUser(request);
         DashboardStatsResponse stats = dashboardService.getStaffDashboardStats(username);
         return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+    
+    // NEW: Profit/Loss details endpoint for the modal
+    @GetMapping("/profit-details")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ProfitDetailsResponse>> getProfitDetails(
+            @RequestParam(defaultValue = "daily") String period) {
+        ProfitDetailsResponse details = dashboardService.getProfitDetails(period);
+        return ResponseEntity.ok(ApiResponse.success(details));
     }
     
     private String getCurrentUser(HttpServletRequest request) {

@@ -38,6 +38,14 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/login', { username, password });
       const { token, ...userData } = response.data.data;
       
+      // Check if user is INACTIVE - reject login
+      if (userData.status === 'INACTIVE') {
+        return { 
+          success: false, 
+          message: 'Your account is inactive. Please contact the administrator for assistance.'
+        };
+      }
+      
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
       setToken(token);

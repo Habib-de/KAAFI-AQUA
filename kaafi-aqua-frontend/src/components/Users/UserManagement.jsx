@@ -17,7 +17,8 @@ const UserManagement = () => {
     email: '',
     phone: '',
     role: 'STAFF',
-    password: ''
+    password: '',
+    status: 'ACTIVE'
   });
 
   useEffect(() => {
@@ -81,7 +82,8 @@ const UserManagement = () => {
       email: user.email,
       phone: user.phone || '',
       role: user.role,
-      password: ''
+      password: '',
+      status: user.status || 'ACTIVE'
     });
     setShowAddModal(true);
   };
@@ -107,6 +109,7 @@ const UserManagement = () => {
 
       const response = await api.put(`/users/${editingUser.id}`, updateData);
       
+      // FIXED: Use backend response directly, don't overwrite status
       setUsers(users.map(user => 
         user.id === editingUser.id ? response.data.data : user
       ));
@@ -137,13 +140,30 @@ const UserManagement = () => {
   const toggleUserStatus = async (id, currentStatus) => {
     try {
       const response = await api.patch(`/users/${id}/toggle-status`);
+      
       setUsers(users.map(user => 
         user.id === id ? response.data.data : user
       ));
+      
       toast.success(`User status updated to ${response.data.data.status === 'ACTIVE' ? 'Active' : 'Inactive'}`);
+      
+      return response.data.data.status;
     } catch (error) {
       console.error('Failed to toggle user status:', error);
       toast.error(error.response?.data?.message || 'Failed to update user status');
+      throw error;
+    }
+  };
+
+  const handleStatusToggleInModal = async () => {
+    try {
+      const newStatus = await toggleUserStatus(editingUser.id, formData.status);
+      setFormData({
+        ...formData, 
+        status: newStatus
+      });
+    } catch (error) {
+      // Error already handled in toggleUserStatus
     }
   };
 
@@ -154,7 +174,8 @@ const UserManagement = () => {
       email: '',
       phone: '',
       role: 'STAFF',
-      password: ''
+      password: '',
+      status: 'ACTIVE'
     });
     setEditingUser(null);
     setShowAddModal(false);
@@ -387,7 +408,11 @@ const UserManagement = () => {
                   onChange={(e) => setFormData({...formData, username: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter username"
+                  disabled={editingUser}
                 />
+                {editingUser && (
+                  <p className="text-xs text-gray-500 mt-1">Username cannot be changed</p>
+                )}
               </div>
               
               <div>
@@ -429,22 +454,59 @@ const UserManagement = () => {
                   <option value="STAFF">Sales Staff</option>
                 </select>
               </div>
-              
-              {!editingUser && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password *
-                  </label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter password (min 6 characters)"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters</p>
+
+              {/* STATUS TOGGLE SECTION - Only shown when editing */}
+              {editingUser && (
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Account Status
+                    </label>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {formData.status === 'ACTIVE' 
+                        ? 'User can login and access the system' 
+                        : 'User cannot access the system'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleStatusToggleInModal}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center space-x-2 ${
+                      formData.status === 'ACTIVE'
+                        ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                    }`}
+                  >
+                    {formData.status === 'ACTIVE' ? (
+                      <>
+                        <UserCheck className="w-4 h-4" />
+                        <span>Active</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserX className="w-4 h-4" />
+                        <span>Inactive</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password {editingUser ? '(leave blank to keep unchanged)' : '*'}
+                </label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={editingUser ? "Enter new password (optional)" : "Enter password (min 6 characters)"}
+                />
+                {!editingUser && (
+                  <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters</p>
+                )}
+              </div>
             </div>
             
             <div className="flex justify-end space-x-3 p-6 border-t border-gray-100">

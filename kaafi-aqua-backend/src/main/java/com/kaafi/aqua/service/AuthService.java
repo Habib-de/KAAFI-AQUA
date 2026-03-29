@@ -53,6 +53,11 @@ public class AuthService {
         User user = userRepository.findByUsername(request.getUsername())
             .orElseThrow(() -> new RuntimeException("User not found"));
         
+        // Check if user is INACTIVE - reject login
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            throw new RuntimeException("Your account is inactive. Please contact the administrator for assistance.");
+        }
+        
         // Update last login
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
@@ -68,7 +73,8 @@ public class AuthService {
             user.getUsername(),
             user.getName(),
             user.getEmail(),
-            user.getRole()
+            user.getRole(),
+            user.getStatus()  // ADDED: Include status in response
         );
     }
     

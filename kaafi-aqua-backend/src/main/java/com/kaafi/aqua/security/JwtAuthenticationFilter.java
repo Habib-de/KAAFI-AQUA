@@ -39,13 +39,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) throws ServletException {
-        String path = request.getRequestURI();
+        String path = request.getMethod() + ":" + request.getRequestURI();
         log.debug("Checking if path should be filtered: {}", path);
         
-        boolean isPublic = PUBLIC_ENDPOINTS.stream().anyMatch(path::startsWith);
+        // CRITICAL: Skip JWT filter for OPTIONS requests (CORS preflight)
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            log.debug("Skipping JWT filter for OPTIONS request");
+            return true;
+        }
+        
+        boolean isPublic = PUBLIC_ENDPOINTS.stream().anyMatch(request.getRequestURI()::startsWith);
         
         if (isPublic) {
-            log.debug("Skipping JWT filter for public endpoint: {}", path);
+            log.debug("Skipping JWT filter for public endpoint: {}", request.getRequestURI());
         }
         
         return isPublic;
@@ -56,6 +62,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                    @NonNull HttpServletResponse response, 
                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
+            // Double-check for OPTIONS (though shouldNotFilter should catch it)
+            if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+            
             String jwt = getJwtFromRequest(request);
             
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
@@ -68,6 +80,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.debug("Authenticated user: {}", username);
+            } else {
+                log.debug("No valid JWT token found for request: {}", request.getRequestURI());
             }
         } catch (Exception ex) {
             log.error("Could not set user authentication in security context", ex);

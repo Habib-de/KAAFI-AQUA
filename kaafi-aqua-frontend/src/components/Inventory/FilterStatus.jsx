@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Droplets, AlertTriangle, CheckCircle, RefreshCw, Filter, Activity, Plus, Edit } from 'lucide-react';
+import { Droplets, AlertTriangle, CheckCircle, RefreshCw, Filter, Activity, Plus, Edit, Calendar } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -20,6 +20,9 @@ const FilterStatus = () => {
   const [updateData, setUpdateData] = useState({
     status: '',
     percentage: 100,
+    action: '',
+    technician: '',
+    maintenanceDate: new Date().toISOString().split('T')[0],
     notes: ''
   });
   
@@ -71,6 +74,23 @@ const FilterStatus = () => {
     }
   };
 
+  // Calculate status based on percentage
+  const getStatusFromPercentage = (percentage) => {
+    if (percentage > 70) return 'GOOD';
+    if (percentage > 30) return 'WARNING';
+    return 'CRITICAL';
+  };
+
+  // Handle percentage change - auto-update status
+  const handlePercentageChange = (percentage) => {
+    const newStatus = getStatusFromPercentage(percentage);
+    setUpdateData({
+      ...updateData,
+      percentage: percentage,
+      status: newStatus
+    });
+  };
+
   const handleAddMaintenance = async (e) => {
     e.preventDefault();
     
@@ -109,6 +129,7 @@ const FilterStatus = () => {
     setSubmitting(true);
     
     try {
+      // Update filter status and percentage
       await api.put(`/filters/${selectedFilter.id}/update`, null, {
         params: {
           status: updateData.status,
@@ -117,10 +138,29 @@ const FilterStatus = () => {
         }
       });
       
+      // Add maintenance log if action and technician are provided
+      if (updateData.action && updateData.technician) {
+        await api.post('/filters/maintenance-log', null, {
+          params: {
+            filterName: selectedFilter.name,
+            action: updateData.action,
+            technician: updateData.technician,
+            notes: updateData.notes || `Filter updated. New status: ${getDisplayStatus(updateData.status)}, New percentage: ${updateData.percentage}%`
+          }
+        });
+      }
+      
       toast.success(`Filter ${selectedFilter.name} updated successfully!`);
       setShowUpdateModal(false);
       setSelectedFilter(null);
-      setUpdateData({ status: '', percentage: 100, notes: '' });
+      setUpdateData({
+        status: '',
+        percentage: 100,
+        action: '',
+        technician: '',
+        maintenanceDate: new Date().toISOString().split('T')[0],
+        notes: ''
+      });
       fetchFilters(); // Refresh the list
       fetchMaintenanceLogs(); // Refresh maintenance logs
       
@@ -137,6 +177,9 @@ const FilterStatus = () => {
     setUpdateData({
       status: filter.status,
       percentage: filter.percentage,
+      action: '',
+      technician: '',
+      maintenanceDate: new Date().toISOString().split('T')[0],
       notes: ''
     });
     setShowUpdateModal(true);
@@ -191,7 +234,7 @@ const FilterStatus = () => {
           className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Maintenance</span>
+          <span>Maintenance</span>
         </button>
       </div>
 
@@ -306,7 +349,8 @@ const FilterStatus = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filter</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Technician</th>
-               </tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {maintenanceLog.length > 0 ? (
@@ -316,11 +360,12 @@ const FilterStatus = () => {
                     <td className="px-6 py-4 text-sm text-gray-900">{log.filterName}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{log.action}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{log.technician}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{log.notes || '-'}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center py-12 text-gray-500">
+                  <td colSpan="5" className="text-center py-12 text-gray-500">
                     No maintenance logs available
                   </td>
                 </tr>
@@ -419,7 +464,7 @@ const FilterStatus = () => {
         </div>
       )}
 
-      {/* Update Filter Modal */}
+      {/* Update Filter Modal with Auto Status Calculation */}
       {showUpdateModal && selectedFilter && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -433,36 +478,98 @@ const FilterStatus = () => {
             </div>
             
             <form onSubmit={handleUpdateFilter} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Current Percentage</label>
-                <p className="text-lg font-semibold text-gray-900">{selectedFilter.percentage}%</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Status *</label>
-                <select
-                  required
-                  value={updateData.status}
-                  onChange={(e) => setUpdateData({...updateData, status: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="GOOD">Good</option>
-                  <option value="WARNING">Warning</option>
-                  <option value="CRITICAL">Critical</option>
-                </select>
+              <div className="bg-gray-50 p-3 rounded-lg mb-2">
+                <p className="text-sm text-gray-600">Current Status</p>
+                <p className="text-lg font-semibold">{getDisplayStatus(selectedFilter.status)} ({selectedFilter.percentage}%)</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">New Percentage *</label>
                 <input
-                  type="number"
-                  required
+                  type="range"
                   min="0"
                   max="100"
+                  step="1"
                   value={updateData.percentage}
-                  onChange={(e) => setUpdateData({...updateData, percentage: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => handlePercentageChange(parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 />
+                <div className="flex justify-between text-sm mt-2">
+                  <span className="text-red-500">0%</span>
+                  <span className="text-yellow-500">30%</span>
+                  <span className="text-green-500">70%</span>
+                  <span className="text-green-600">100%</span>
+                </div>
+                <div className="mt-2 flex justify-between items-center">
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    max="100"
+                    value={updateData.percentage}
+                    onChange={(e) => handlePercentageChange(parseInt(e.target.value))}
+                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-center"
+                  />
+                  <span className="text-sm text-gray-500">%</span>
+                </div>
+              </div>
+              
+              {/* Auto-calculated Status Display */}
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Status will be:</p>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-3 h-3 rounded-full ${updateData.percentage > 70 ? 'bg-green-500' : updateData.percentage > 30 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+                  <span className={`font-semibold ${
+                    updateData.percentage > 70 ? 'text-green-600' : 
+                    updateData.percentage > 30 ? 'text-yellow-600' : 
+                    'text-red-600'
+                  }`}>
+                    {updateData.percentage > 70 ? 'Good' : updateData.percentage > 30 ? 'Warning' : 'Critical'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="border-t border-gray-200 pt-4 mt-2">
+                <h3 className="text-md font-medium text-gray-800 mb-3">Maintenance Record (Optional)</h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Action</label>
+                  <select
+                    value={updateData.action}
+                    onChange={(e) => setUpdateData({...updateData, action: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Action (optional)</option>
+                    <option value="Replaced">Replaced</option>
+                    <option value="Cleaned">Cleaned</option>
+                    <option value="Inspected">Inspected</option>
+                    <option value="Repaired">Repaired</option>
+                  </select>
+                </div>
+                
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Technician</label>
+                  <input
+                    type="text"
+                    value={updateData.technician}
+                    onChange={(e) => setUpdateData({...updateData, technician: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter technician name (optional)"
+                  />
+                </div>
+                
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    Maintenance Date
+                  </label>
+                  <input
+                    type="date"
+                    value={updateData.maintenanceDate}
+                    onChange={(e) => setUpdateData({...updateData, maintenanceDate: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
               
               <div>
@@ -472,11 +579,11 @@ const FilterStatus = () => {
                   onChange={(e) => setUpdateData({...updateData, notes: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   rows="3"
-                  placeholder="Maintenance notes (optional)"
+                  placeholder="Additional notes (optional)"
                 />
               </div>
               
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => setShowUpdateModal(false)}

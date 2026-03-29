@@ -25,4 +25,8 @@ public class SaleRequest {
     private BigDecimal amount;
     
     private PaymentMethod method = PaymentMethod.CASH;
+    
+    // New fields for customer tracking and credit sales
+    private String customerPhone;
+    private Long customerId;
 }

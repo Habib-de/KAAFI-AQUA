@@ -1,6 +1,7 @@
 package com.kaafi.aqua.dto.response;
 
 import com.kaafi.aqua.enums.Role;
+import com.kaafi.aqua.enums.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,4 +17,5 @@ public class LoginResponse {
     private String name;
     private String email;
     private Role role;
+    private UserStatus status;
 }

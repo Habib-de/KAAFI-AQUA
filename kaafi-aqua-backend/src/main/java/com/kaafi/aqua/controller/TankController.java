@@ -1,5 +1,8 @@
 package com.kaafi.aqua.controller;
 
+import com.kaafi.aqua.dto.request.CapacityUpdateRequest;
+import com.kaafi.aqua.dto.request.LevelUpdateRequest;
+import com.kaafi.aqua.dto.request.TankInitRequest;
 import com.kaafi.aqua.dto.request.TankRestockRequest;
 import com.kaafi.aqua.dto.response.ApiResponse;
 import com.kaafi.aqua.model.TankLevel;
@@ -43,6 +46,36 @@ public class TankController {
         return ResponseEntity.ok(ApiResponse.success("Tank restocked successfully", updatedTank));
     }
     
+    @PostMapping("/initialize")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TankLevel>> initializeTank(
+            @Valid @RequestBody TankInitRequest request,
+            HttpServletRequest httpRequest) {
+        String initializedBy = getCurrentUser(httpRequest);
+        TankLevel tank = tankService.initializeTank(request, initializedBy);
+        return ResponseEntity.ok(ApiResponse.success("Tank initialized successfully", tank));
+    }
+    
+    @PutMapping("/capacity")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TankLevel>> updateCapacity(
+            @Valid @RequestBody CapacityUpdateRequest request,
+            HttpServletRequest httpRequest) {
+        String updatedBy = getCurrentUser(httpRequest);
+        TankLevel tank = tankService.updateCapacity(request, updatedBy);
+        return ResponseEntity.ok(ApiResponse.success("Tank capacity updated successfully", tank));
+    }
+    
+    @PutMapping("/level")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TankLevel>> updateLevel(
+            @Valid @RequestBody LevelUpdateRequest request,
+            HttpServletRequest httpRequest) {
+        String updatedBy = getCurrentUser(httpRequest);
+        TankLevel tank = tankService.updateLevel(request, updatedBy);
+        return ResponseEntity.ok(ApiResponse.success("Water level updated successfully", tank));
+    }
+    
     @GetMapping("/usage-history")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<List<TankUsageHistory>>> getTankUsageHistory(
@@ -81,6 +114,6 @@ public class TankController {
             String token = authHeader.substring(7);
             return tokenProvider.getUsernameFromToken(token);
         }
-        return "anonymous";
+        return "system";
     }
 }

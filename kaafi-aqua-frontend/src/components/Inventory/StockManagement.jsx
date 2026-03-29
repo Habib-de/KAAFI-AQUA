@@ -188,7 +188,7 @@ const StockManagement = () => {
             className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Item</span>
+            <span>Item</span>
           </button>
           <button
             onClick={fetchInventory}

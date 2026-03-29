@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Droplets, AlertTriangle, RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
+import { Droplets, AlertTriangle, RefreshCw, TrendingUp, TrendingDown, Zap } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -85,8 +85,18 @@ const TankLevel = () => {
     }
   };
   
+  const handleFillToFull = async () => {
+    const remainingCapacity = targetLevel - tankLevel;
+    if (remainingCapacity <= 0) {
+      toast.error('Tank is already full!');
+      return;
+    }
+    await handleAddWater(remainingCapacity);
+  };
+  
   const estimatedDays = Math.floor(tankLevel / 300);
   const tankPercentage = percentage;
+  const remainingCapacity = targetLevel - tankLevel;
   
   const getStatusColor = () => {
     if (tankPercentage > 70) return 'text-green-600';
@@ -160,6 +170,12 @@ const TankLevel = () => {
                 Estimated {estimatedDays} days of water remaining
               </p>
             )}
+            {tankPercentage > 90 && (
+              <p className="text-xs text-blue-600 mt-1 flex items-center">
+                <Droplets className="w-3 h-3 mr-1" />
+                Tank is nearly full. Only {remainingCapacity}L remaining capacity.
+              </p>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -176,6 +192,22 @@ const TankLevel = () => {
               className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               {restocking ? 'Adding...' : 'Add 1000L'}
+            </button>
+            <button
+              onClick={handleFillToFull}
+              disabled={restocking || tankPercentage >= 100}
+              className={`w-full py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
+                tankPercentage >= 100
+                  ? 'bg-gray-400 cursor-not-allowed text-gray-600'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              <span>
+                {tankPercentage >= 100 
+                  ? 'Tank Full' 
+                  : `Fill to Full (${remainingCapacity}L needed)`}
+              </span>
             </button>
           </div>
         </div>
@@ -214,6 +246,10 @@ const TankLevel = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Current Level</span>
                 <span className="font-medium text-gray-900">{tankLevel}L</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Remaining Capacity</span>
+                <span className="font-medium text-gray-900">{remainingCapacity}L</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Percentage Remaining</span>
