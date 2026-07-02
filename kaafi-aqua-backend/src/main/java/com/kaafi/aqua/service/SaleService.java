@@ -520,7 +520,9 @@ public List<SaleResponse> getAllSales() {
     
     public Page<SaleResponse> getSalesBetweenDatesPaginated(LocalDate startDate, LocalDate endDate, int page, int size) {
         try {
-            Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by("date").descending());
+            Pageable pageable = PageRequest.of(page, size, 
+    org.springframework.data.domain.Sort.by("date").descending()
+        .and(org.springframework.data.domain.Sort.by("id").descending()));
             Page<Sale> salePage = saleRepository.findByDateBetween(startDate, endDate, pageable);
             if (salePage == null || salePage.isEmpty()) {
                 return new PageImpl<>(new ArrayList<>(), pageable, 0);
