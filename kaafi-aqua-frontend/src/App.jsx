@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { 
   Droplets, 
+  Droplet,
   LogOut, 
   LayoutDashboard, 
   ShoppingCart, 
@@ -13,7 +14,8 @@ import {
   Menu, 
   X,
   Filter,
-  Package
+  Package,
+  LogIn 
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SalesProvider } from './context/SalesContext';
@@ -33,6 +35,7 @@ import UserManagement from './components/Users/UserManagement';
 import ProfileSettings from './components/Users/ProfileSettings';
 import CustomerEngagement from './components/CustomerEngagement/CustomerEngagement';
 import AdminSettings from './components/Admin/Settings';
+import LandingPage from './components/Landing/LandingPage';
 import toast from 'react-hot-toast';
 import logoImage from './assets/profile.png';
 
@@ -40,6 +43,7 @@ import logoImage from './assets/profile.png';
 const Layout = ({ children, userRole }) => {
   const { logout, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Get greeting based on time of day
@@ -52,7 +56,7 @@ const Layout = ({ children, userRole }) => {
   
   const handleLogout = () => {
     logout();
-    window.location.href = '/login';
+    navigate('/', { replace: true });
     toast.success('Logged out successfully');
   };
   
@@ -81,66 +85,63 @@ const Layout = ({ children, userRole }) => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar - Mobile Optimized */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="px-3 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
+     
+            {/* Top Navigation Bar - Matching Landing Page */}
+            <nav className="bg-white/85 backdrop-blur-lg border-b border-slate-200/70 sticky top-0 z-50">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20">
+            
             {/* Left section - Menu button and Logo */}
             <div className="flex items-center">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden mr-2 sm:mr-4 text-gray-600 hover:text-gray-900 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                className="lg:hidden mr-3 text-slate-600 hover:text-[#0B2A3C] p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
                 aria-label="Menu"
               >
                 <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
               
-              {/* Brand with Water Drop Background - Option 2 (Keeping profile image) */}
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <img 
-                  src={logoImage} 
-                  alt="KAAFI AQUA" 
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-500"
+                            <div className="flex flex-col items-center justify-center leading-none">
+                <img
+                  src={logoImage}
+                  alt="KAAFI AQUA"
+                  className="h-10 sm:h-10 w-auto max-w-[120px] sm:max-w-[150px] object-contain"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = 'https://via.placeholder.com/40?text=KA';
+                    e.target.style.display = 'none';
                   }}
                 />
-                <div>
-                  <h1 className="text-sm sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                    KAAFI AQUA
-                  </h1>
-                  <span className="text-[10px] sm:text-xs text-gray-500">
-                    {userRole === 'ADMIN' ? '' : ''}
-                  </span>
-                </div>
+
+                {/* Tagline under the logo */}
+                <span
+                  className="hidden sm:block mt-0.5 text-[10px] font-semibold tracking-tight text-slate-600 whitespace-nowrap"
+                  style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}
+                >
+                  Pure Bliss in Every Sip
+                </span>
               </div>
             </div>
             
             {/* Right section - User info and Logout */}
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                {/* User info - Responsive text sizes */}
-                <div className="text-right">
-                  <p className="text-xs sm:text-sm font-medium text-gray-700">
-                    {getGreeting()}!
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-gray-500">
-                    {userRole === 'ADMIN' ? 'Administrator' : 'Sales Staff'}
-                  </p>
-                </div>
-                
-                {/* Logout button - Icon only on very small screens */}
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                  aria-label="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-[#0B2A3C]">
+                  {getGreeting()}!
+                </p>
+                <p className="text-xs text-slate-500">
+                  {userRole === 'ADMIN' ? 'Administrator' : 'Sales Staff'}
+                </p>
               </div>
+              
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
+              >
+                <LogOut size={16} />
+                <span className="hidden sm:inline">Log out</span>
+              </button>
             </div>
+
           </div>
         </div>
       </nav>
@@ -212,6 +213,18 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
   
   return children;
+};
+
+// Wrapper so LandingPage can navigate with react-router
+const LandingRoute = () => {
+  const navigate = useNavigate();
+  return (
+    <LandingPage
+      onNavigate={(page) => {
+        if (page === 'login') navigate('/login');
+      }}
+    />
+  );
 };
 
 function App() {
@@ -352,8 +365,11 @@ function App() {
             } />
             
             
-            {/* Default Route */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Public Landing Page */}
+    <Route path="/" element={<LandingRoute />} />
+
+      {/* Default Route — unknown paths go to landing, not login */}
+    <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </SalesProvider>
       </AuthProvider>
